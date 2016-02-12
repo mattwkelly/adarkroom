@@ -77,15 +77,17 @@ var Events = {
 
 		$('<div>').text(scene.notification).appendTo(desc);
 
+		var fightBox = $('<div>').attr('id', 'fight').appendTo(desc);
 		// Draw the wanderer
-		Events.createFighterDiv('@', World.health, World.getMaxHealth()).attr('id', 'wanderer').appendTo(desc);
+		Events.createFighterDiv('@', World.health, World.getMaxHealth()).attr('id', 'wanderer').appendTo(fightBox);
 
 		// Draw the enemy
-		Events.createFighterDiv(scene.chara, scene.health, scene.health).attr('id', 'enemy').appendTo(desc);
+		Events.createFighterDiv(scene.chara, scene.health, scene.health).attr('id', 'enemy').appendTo(fightBox);
 
 		// Draw the action buttons
 		var btns = $('#buttons', Events.eventPanel());
 
+		var attackBtns = $('<div>').attr('id','attackButtons');
 		var numWeapons = 0;
 		for(var k in World.Weapons) {
 			var weapon = World.Weapons[k];
@@ -103,18 +105,23 @@ var Events = {
 					}
 				}
 				numWeapons++;
-				Events.createAttackButton(k).appendTo(btns);
+				Events.createAttackButton(k).appendTo(attackBtns);
 			}
 		}
 		if(numWeapons === 0) {
 			// No weapons? You can punch stuff!
-			Events.createAttackButton('fists').prependTo(btns);
+			Events.createAttackButton('fists').prependTo(attackBtns);
 		}
+		$('<div>').addClass('clear').appendTo(attackBtns);
+		attackBtns.appendTo(btns);
 
-		Events.createEatMeatButton().appendTo(btns);
+		var healBtns = $('<div>').attr('id','healButtons');
+		Events.createEatMeatButton().appendTo(healBtns);
 		if((Path.outfit['medicine'] || 0) !== 0) {
-			Events.createUseMedsButton().appendTo(btns);
+			Events.createUseMedsButton().appendTo(healBtns);
 		}
+		$('<div>').addClass('clear').appendTo(healBtns);
+		healBtns.appendTo(btns);
 
 		// Set up the enemy attack timer
 		Events._enemyAttackTimer = Engine.setTimeout(Events.enemyAttack, scene.attackDelay * 1000);
@@ -293,7 +300,7 @@ var Events = {
 						// enable or create the punch button
 						var fists = $('#attack_fists');
 						if(fists.length === 0) {
-							Events.createAttackButton('fists').prependTo('#buttons', Events.eventPanel());
+							Events.createAttackButton('fists').prependTo('#attackButtons', Events.eventPanel());
 						} else {
 							Button.setDisabled(fists, false);
 						}
@@ -456,6 +463,7 @@ var Events = {
 			Engine.setTimeout(function() {
 				try {
 					var scene = Events.activeEvent().scenes[Events.activeScene];
+					var sequel = false;
 					var leaveBtn = false;
 					var desc = $('#description', Events.eventPanel());
 					var btns = $('#buttons', Events.eventPanel());
@@ -465,9 +473,11 @@ var Events = {
 
 					var takeETbtn = Events.drawLoot(scene.loot);
 
+					var exitBtns = $('<div>').attr('id','exitButtons');
 					if(scene.buttons) {
+						sequel = true;
 						// Draw the buttons
-						leaveBtn = Events.drawButtons(scene);
+						leaveBtn = Events.drawButtons(scene, exitBtns);
 					} else {
 						leaveBtn = new Button.Button({
 							id: 'leaveBtn',
@@ -481,12 +491,18 @@ var Events = {
 							},
 							text: _('leave')
 						});
-						Button.cooldown(leaveBtn.appendTo(btns));
-
-						Events.createEatMeatButton(0).appendTo(btns);
+						Button.cooldown(leaveBtn.appendTo(exitBtns));
+					}
+					$('<div>').addClass('clear').appendTo(exitBtns);
+					exitBtns.appendTo(btns);
+					if(!sequel){
+						var healBtns = $('<div>').attr('id','healButtons');
+						Events.createEatMeatButton(0).appendTo(healBtns);
 						if((Path.outfit['medicine'] || 0) !== 0) {
-							Events.createUseMedsButton(0).appendTo(btns);
+							Events.createUseMedsButton(0).appendTo(healBtns);
 						}
+						$('<div>').addClass('clear').appendTo(healBtns);
+						healBtns.appendTo(btns);
 					}
 					Events.allowLeave(takeETbtn, leaveBtn);
 				} catch(e) {
@@ -771,13 +787,14 @@ var Events = {
 		}
 
 		// Draw the buttons
-		leaveBtn = Events.drawButtons(scene);
+		var exitBtns = $('<div>').attr('id','exitButtons').appendTo($('#buttons', Events.eventPanel()));
+		leaveBtn = Events.drawButtons(scene, exitBtns);
+		$('<div>').addClass('clear').appendTo(exitBtns);
 
 		Events.allowLeave(takeETbtn, leaveBtn);
 	},
 
-	drawButtons: function(scene) {
-		var btns = $('#buttons', Events.eventPanel());
+	drawButtons: function(scene, block) {
 		var btnsList = [];
 		for(var id in scene.buttons) {
 			var info = scene.buttons[id];
@@ -787,7 +804,7 @@ var Events = {
 					cost: info.cost,
 					click: Events.buttonClick,
 					cooldown: info.cooldown
-				}).appendTo(btns);
+				}).appendTo(block);
 			if(typeof info.available == 'function' && !info.available()) {
 				Button.setDisabled(b, true);
 			}
