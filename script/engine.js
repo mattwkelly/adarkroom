@@ -7,6 +7,8 @@
 		SAVE_DISPLAY: 30 * 1000,
 		GAME_OVER: false,
 
+		// for storing time intervals
+		counters: [],
 		//object event types
 		topics: {},
 
@@ -751,6 +753,21 @@
 			if(lang && typeof Storage != 'undefined' && localStorage) {
 				localStorage.lang = lang;
 			}
+		},
+
+		setInterval: function(callback, interval, skipDouble) {
+			var index = Engine.counters.length;
+			Engine.counters[index] = {
+				'callback': callback,
+				'interval': interval,
+				'skipDouble': skipDouble,
+				'counter': Engine.setTimeout(Engine.counters[index].action, interval, skipDouble)
+				'action': function(start) {
+					this.callback();
+					this.counter = Engine.setTimeout(this.action, this.interval, this.skipDouble);
+				}
+			};
+			return index;
 		},
 
 		setInterval: function(callback, interval, skipDouble){
