@@ -761,12 +761,12 @@
 				'callback': callback,
 				'interval': interval,
 				'skipDouble': skipDouble,
-				'counter': Engine.setTimeout(Engine.counters[index].action, interval, skipDouble)
 				'action': function(start) {
 					this.callback();
 					this.counter = Engine.setTimeout(this.action, this.interval, this.skipDouble);
 				}
 			};
+			Engine.counters[index].counter = Engine.setTimeout(Engine.counters[index].action, interval, skipDouble)
 			return index;
 		},
 
