@@ -8,7 +8,8 @@
 		GAME_OVER: false,
 
 		// for storing time intervals
-		counters: [],
+		timeouts: [],
+		intervals: [],
 		//object event types
 		topics: {},
 
@@ -780,15 +781,24 @@
 
 		},
 
-		setTimeout: function(callback, timeout, skipDouble){
-
-			if( Engine.options.doubleTime && !skipDouble ){
+		setTimeout: function(callback, timeout, skipDouble, i){
+			var index = Engine.intervals.length;
+			Engine.intevals[index] = {}
+			if(skipDouble) {
+				Engine.timeouts[index]['action'] = setTimeout(callback, timeout);
+			} else {
 				Engine.log('Double time, cutting timeout in half');
-				timeout /= 2;
+				var checkTime = 1000;
+				if(Engine.options.doubleTime){
+					timeout /= 2;
+					checkTime /= 2
+				}
+				Engine.timeouts[index]['counter'] = callback / 1000;
+				Engine.timeouts[index]['control'] = setInterval(function() {
+					Engine.timeouts[index]['counter']--
+				}, 1000)
 			}
-
-			return setTimeout(callback, timeout);
-
+			return index;
 		}
 
 	};
